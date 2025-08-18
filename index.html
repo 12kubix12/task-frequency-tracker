@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Frequency Tracker</title>
+    <script crossorigin src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .icon { width: 1rem; height: 1rem; display: inline-block; }
+        .icon-lg { width: 2rem; height: 2rem; display: inline-block; }
+        .category-personal { background-color: #fce7f3; border-color: #f9a8d4; color: #be185d; }
+        .category-mirek { background-color: #dbeafe; border-color: #93c5fd; color: #1d4ed8; }
+        .category-household { background-color: #dcfce7; border-color: #86efac; color: #166534; }
+        .category-identify { background-color: #f3f4f6; border-color: #d1d5db; color: #374151; }
+        .task-item { transition: all 0.2s ease; }
+        .task-item:hover { transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .inline-edit { background: none; border: none; outline: none; width: 100%; font-weight: 600; }
+        .inline-edit:focus { background: white; border: 2px solid #3b82f6; border-radius: 4px; padding: 2px 4px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        // Icon components
+        const Calendar = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+        );
+        
+        const Plus = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+        );
+        
+        const BarChart3 = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+        );
+        
+        const Clock = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+        
+        const TrendingUp = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+        );
+        
+        const Search = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+        );
+
+        const Download = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+        );
+
+        const Upload = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+            </svg>
+        );
+
+        const X = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        );
+
+        const Check = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+        );
+
+        const Share = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+            </svg>
+        );
+
+        const Eye = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+        );
+
+        const Filter = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z" />
+            </svg>
+        );
+
+        const TaskTracker = () => {
+            // Category definitions
+            const categories = {
+                personal: { name: 'Personal Care', emoji: '💅', color: 'category-personal' },
+                mirek: { name: 'Mirek', emoji: '👨‍⚕️', color: 'category-mirek' },
+                household: { name: 'Household', emoji: '🏠', color: 'category-household' },
+                identify: { name: 'Identify', emoji: '🔍', color: 'category-identify' }
+            };
+
+            // Auto-categorization rules
+            const categorizeTask = (taskText) => {
+                const text = taskText.toLowerCase();
+                if (text.includes('mirek') || text.includes('shaved') || text.includes('showered mirek') || text.includes('hair')) {
+                    return 'mirek';
+                }
+                if (text.includes('nails') || text.includes('painted') || text.includes('personal')) {
+                    return 'personal';
+                }
+                if (text.includes('identified') || text.includes('should be') || text.includes('needs to be')) {
+                    return 'identify';
+                }
+                // Default to household for cleaning/organizing tasks
+                return 'household';
+            };
+
+            // Capitalize words properly
+            const capitalizeText = (text) => {
+                return text.split(' ').map(word => 
+                    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                ).join(' ');
+            };
+
+            const initialTasks = [
+                { id: 1, task: "Wiped Down Kitchen Sink", date: "2025-07-30", duration: "", notes: "", category: "household", room: "Kitchen" },
+                { id: 2, task: "Cleaned Washroom Sink", date: "2025-08-01", duration: "", notes: "", category: "household", room: "Washroom" },
+                { id: 3, task: "Cleaned Toilet", date: "2025-08-01", duration: "", notes: "", category: "household", room: "Washroom" },
+                { id: 4, task: "Cleaned Washroom Sink", date: "2025-08-09", duration: "", notes: "", category: "household", room: "Washroom" },
+                { id: 5, task: "Cleaned Toilet", date: "2025-08-09", duration: "", notes: "", category: "household", room: "Washroom" },
+                { id: 6, task: "Cleaned Shoes In Front Of Door", date: "2025-08-09", duration: "", notes: "", category: "household", room: "Foyer" },
+                { id: 7, task: "Cleaned Bathtub", date: "2025-08-09", duration: "", notes: "", category: "household", room: "Washroom" },
+                { id: 8, task: "Painted Toe Nails", date: "2025-08-03", duration: "", notes: "", category: "personal", room: "" },
+                { id: 9, task: "Folded Almost All Laundry", date: "2025-08-09", duration: "", notes: "", category: "household", room: "Bedroom" },
+                { id: 10, task: "Swept Front Room/Dining", date: "2025-08-10", duration: "", notes: "", category: "household", room: "Living Room" },
+                { id: 11, task: "Sorted Laundry Into Shades", date: "2025-08-17", duration: "", notes: "", category: "household", room: "Bedroom" },
+                { id: 12, task: "Cleaned Kitchen Sink", date: "2025-08-17", duration: "", notes: "", category: "household", room: "Kitchen" },
+                { id: 13, task: "Hung Up And Put Away Clean Clothes I Tried On But Didn't Wear", date: "2025-08-17", duration: "", notes: "", category: "household", room: "Bedroom" },
+                { id: 14, task: "Put Away Purses I Tried On But Didn't Wear", date: "2025-08-17", duration: "", notes: "", category: "household", room: "Bedroom" },
+                { id: 15, task: "Tidied Up Foyer", date: "2025-08-17", duration: "", notes: "", category: "household", room: "Foyer" },
+                { id: 16, task: "Stacked Shoes In Front Entry Way", date: "2025-08-17", duration: "", notes: "", category: "household", room: "Foyer" },
+                { id: 17, task: "Tidied Office Desk Surface", date: "2025-08-17", duration: "", notes: "", category: "household", room: "Office" },
+                { id: 18, task: "Cleaned All Clutter Off White Couch", date: "2025-08-17", duration: "", notes: "", category: "household", room: "Living Room" },
+                { id: 19, task: "Cleaned All Clutter Off Wardrobe Chair", date: "2025-08-17", duration: "", notes: "", category: "household", room: "Bedroom" },
+                { id: 20, task: "Kitchen Counter And Floor Should Be Cleaned", date: "2025-08-15", duration: "", notes: "Identified Need - Not Yet Completed", category: "identify", room: "Kitchen" },
+                { id: 21, task: "Shaved Mirek", date: "2025-08-10", duration: "", notes: "", category: "mirek", room: "" },
+                { id: 22, task: "Identified Mirek Needs To Be Shaved", date: "2025-08-16", duration: "", notes: "Identified Need - Not Yet Completed", category: "identify", room: "" },
+                { id: 23, task: "Shaved Mirek", date: "2025-08-04", duration: "", notes: "", category: "mirek", room: "" },
+                { id: 24, task: "Showered Mirek", date: "2025-08-04", duration: "", notes: "", category: "mirek", room: "Washroom" },
+                { id: 25, task: "Painted Nails", date: "2025-07-29", duration: "", notes: "", category: "personal", room: "" },
+                { id: 26, task: "Painted Nails", date: "2025-08-11", duration: "", notes: "", category: "personal", room: "" },
+                { id: 27, task: "Showered Mirek", date: "2025-07-12", duration: "", notes: "", category: "mirek", room: "Washroom" },
+                { id: 28, task: "Washed Mirek Hair", date: "2025-07-12", duration: "", notes: "", category: "mirek", room: "Washroom" },
+                { id: 29, task: "Did Mirek's Nails", date: "2025-07-13", duration: "", notes: "", category: "mirek", room: "" },
+                { id: 30, task: "Shaved Mirek", date: "2025-07-09", duration: "", notes: "", category: "mirek", room: "" },
+                { id: 31, task: "Shaved Mirek", date: "2025-07-22", duration: "", notes: "", category: "mirek", room: "" }
+            ];
+
+            const [tasks, setTasks] = React.useState(() => {
+                try {
+                    const saved = localStorage.getItem('taskTrackerTasks');
+                    const loadedTasks = saved ? JSON.parse(saved) : initialTasks;
+                    // Add missing category/room fields to existing tasks
+                    return loadedTasks.map(task => ({
+                        ...task,
+                        category: task.category || categorizeTask(task.task),
+                        room: task.room || "",
+                        task: capitalizeText(task.task)
+                    }));
+                } catch (e) {
+                    return initialTasks;
+                }
+            });
+            
+            const [currentView, setCurrentView] = React.useState('monthly');
+            const [selectedMonth, setSelectedMonth] = React.useState(new Date(2025, 7, 1));
+            const [selectedWeek, setSelectedWeek] = React.useState(new Date());
+            const [showAddForm, setShowAddForm] = React.useState(false);
+            const [searchTerm, setSearchTerm] = React.useState('');
+            const [categoryFilter, setCategoryFilter] = React.useState('all');
+            const [editingTask, setEditingTask] = React.useState(null);
+            const [taskSuggestions, setTaskSuggestions] = React.useState([]);
+            const [showSuggestions, setShowSuggestions] = React.useState(false);
+            const [selectedDay, setSelectedDay] = React.useState(null);
+            const [showImportForm, setShowImportForm] = React.useState(false);
+            const [importData, setImportData] = React.useState('');
+            const [importPreview, setImportPreview] = React.useState([]);
+            const [inlineEditing, setInlineEditing] = React.useState(null);
+            
+            const [newTask, setNewTask] = React.useState({
+                task: '',
+                date: new Date().toISOString().split('T')[0],
+                duration: '',
+                notes: '',
+                category: 'household',
+                room: ''
+            });
+
+            React.useEffect(() => {
+                try {
+                    localStorage.setItem('taskTrackerTasks', JSON.stringify(tasks));
+                } catch (e) {
+                    console.log('localStorage not available');
+                }
+            }, [tasks]);
+
+            // Filter tasks based on category
+            const getFilteredTasks = () => {
+                let filtered = tasks;
+                if (categoryFilter !== 'all') {
+                    filtered = filtered.filter(task => task.category === categoryFilter);
+                }
+                if (searchTerm) {
+                    filtered = filtered.filter(task => 
+                        task.task.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        (task.room && task.room.toLowerCase().includes(searchTerm.toLowerCase()))
+                    );
+                }
+                return filtered;
+            };
+
+            // Inline editing functions
+            const startInlineEdit = (taskId, field) => {
+                setInlineEditing({ taskId, field });
+            };
+
+            const saveInlineEdit = (taskId, field, value) => {
+                const processedValue = field === 'task' || field === 'room' ? capitalizeText(value) : value;
+                setTasks(tasks.map(task => 
+                    task.id === taskId ? { 
+                        ...task, 
+                        [field]: processedValue,
+                        category: field === 'task' ? categorizeTask(processedValue) : task.category
+                    } : task
+                ));
+                setInlineEditing(null);
+            };
+
+            const cancelInlineEdit = () => {
+                setInlineEditing(null);
+            };
+
+            // Device sync via data sharing
+            const shareData = async () => {
+                const dataToShare = {
+                    tasks: tasks,
+                    exportDate: new Date().toISOString(),
+                    version: "2.0"
+                };
+                
+                const dataString = JSON.stringify(dataToShare, null, 2);
+                const blob = new Blob([dataString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `task-tracker-sync-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+            };
+
+            // Parse CSV data with new fields
+            const parseCSV = (csvText) => {
+                const lines = csvText.trim().split('\n');
+                if (lines.length < 2) return [];
+
+                const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
+                const taskIndex = headers.findIndex(h => h.includes('task'));
+                const dateIndex = headers.findIndex(h => h.includes('date'));
+                const durationIndex = headers.findIndex(h => h.includes('duration'));
+                const notesIndex = headers.findIndex(h => h.includes('notes'));
+                const categoryIndex = headers.findIndex(h => h.includes('category'));
+                const roomIndex = headers.findIndex(h => h.includes('room'));
+
+                if (taskIndex === -1 || dateIndex === -1) {
+                    throw new Error('CSV must contain Task and Date columns');
+                }
+
+                const parsedTasks = [];
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i];
+                    if (!line.trim()) continue;
+
+                    // Simple CSV parsing (handles quoted fields)
+                    const fields = [];
+                    let current = '';
+                    let inQuotes = false;
+                    
+                    for (let j = 0; j < line.length; j++) {
+                        const char = line[j];
+                        if (char === '"') {
+                            inQuotes = !inQuotes;
+                        } else if (char === ',' && !inQuotes) {
+                            fields.push(current.trim());
+                            current = '';
+                        } else {
+                            current += char;
+                        }
+                    }
+                    fields.push(current.trim()); // Add the last field
+
+                    if (fields.length > Math.max(taskIndex, dateIndex)) {
+                        const taskText = fields[taskIndex]?.replace(/"/g, '').trim();
+                        const dateStr = fields[dateIndex]?.replace(/"/g, '').trim();
+                        
+                        // Validate date format
+                        const date = new Date(dateStr);
+                        if (taskText && dateStr && !isNaN(date.getTime())) {
+                            const capitalizedTask = capitalizeText(taskText);
+                            const importedCategory = categoryIndex >= 0 ? fields[categoryIndex]?.replace(/"/g, '').trim() : '';
+                            const autoCategory = categorizeTask(capitalizedTask);
+                            
+                            parsedTasks.push({
+                                id: Date.now() + Math.random(), // Temporary ID for preview
+                                task: capitalizedTask,
+                                date: date.toISOString().split('T')[0],
+                                duration: durationIndex >= 0 ? (fields[durationIndex]?.replace(/"/g, '').trim() || '') : '',
+                                notes: notesIndex >= 0 ? (fields[notesIndex]?.replace(/"/g, '').trim() || '') : '',
+                                category: importedCategory && Object.keys(categories).includes(importedCategory) ? importedCategory : autoCategory,
+                                room: roomIndex >= 0 ? capitalizeText(fields[roomIndex]?.replace(/"/g, '').trim() || '') : ''
+                            });
+                        }
+                    }
+                }
+                return parsedTasks;
+            };
+
+            // Handle import data change
+            const handleImportDataChange = (value) => {
+                setImportData(value);
+                if (value.trim()) {
+                    try {
+                        const parsed = parseCSV(value);
+                        setImportPreview(parsed);
+                    } catch (error) {
+                        setImportPreview([]);
+                    }
+                } else {
+                    setImportPreview([]);
+                }
+            };
+
+            // Check if a task is a duplicate (same task name and date)
+            const isDuplicateTask = (newTask, existingTasks) => {
+                return existingTasks.some(existing => 
+                    existing.task.toLowerCase().trim() === newTask.task.toLowerCase().trim() &&
+                    existing.date === newTask.date
+                );
+            };
+
+            // Import tasks from CSV with duplicate detection
+            const importTasks = () => {
+                if (importPreview.length > 0) {
+                    const uniqueNewTasks = [];
+                    const duplicates = [];
+                    
+                    importPreview.forEach(task => {
+                        if (!isDuplicateTask(task, tasks)) {
+                            uniqueNewTasks.push({
+                                ...task,
+                                id: Date.now() + Math.random() // Generate new unique IDs
+                            });
+                        } else {
+                            duplicates.push(task);
+                        }
+                    });
+                    
+                    // Show summary of what was imported
+                    if (duplicates.length > 0) {
+                        alert(`Import complete!\n\nAdded: ${uniqueNewTasks.length} new tasks\nSkipped: ${duplicates.length} duplicates\n\nDuplicates are tasks with the same description and date as existing tasks.`);
+                    } else {
+                        alert(`Import complete! Added ${uniqueNewTasks.length} new tasks.`);
+                    }
+                    
+                    setTasks([...tasks, ...uniqueNewTasks]);
+                    setImportData('');
+                    setImportPreview([]);
+                    setShowImportForm(false);
+                }
+            };
+
+            // File upload handler with duplicate detection
+            const handleFileUpload = (event) => {
+                const file = event.target.files[0];
+                if (file && (file.type === 'text/csv' || file.name.endsWith('.csv'))) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        handleImportDataChange(e.target.result);
+                    };
+                    reader.readAsText(file);
+                } else if (file && file.name.endsWith('.json')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            if (data.tasks && Array.isArray(data.tasks)) {
+                                // Apply duplicate detection for JSON imports too
+                                const uniqueNewTasks = [];
+                                const duplicates = [];
+                                
+                                data.tasks.forEach(task => {
+                                    // Ensure imported tasks have all required fields
+                                    const processedTask = {
+                                        ...task,
+                                        category: task.category || categorizeTask(task.task),
+                                        room: task.room || '',
+                                        task: capitalizeText(task.task)
+                                    };
+                                    
+                                    if (!isDuplicateTask(processedTask, tasks)) {
+                                        uniqueNewTasks.push({
+                                            ...processedTask,
+                                            id: Date.now() + Math.random() // Generate new unique IDs
+                                        });
+                                    } else {
+                                        duplicates.push(processedTask);
+                                    }
+                                });
+                                
+                                // Show summary
+                                if (duplicates.length > 0) {
+                                    alert(`Sync complete!\n\nAdded: ${uniqueNewTasks.length} new tasks\nSkipped: ${duplicates.length} duplicates\n\nDuplicates are tasks with the same description and date.`);
+                                } else {
+                                    alert(`Sync complete! Added ${uniqueNewTasks.length} new tasks.`);
+                                }
+                                
+                                setTasks([...tasks, ...uniqueNewTasks]);
+                                setShowImportForm(false);
+                            }
+                        } catch (error) {
+                            alert('Invalid JSON file format');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+                event.target.value = ''; // Reset file input
+            };
+
+            // Get unique task names for autocomplete
+            const getUniqueTaskNames = () => {
+                const uniqueTasks = [...new Set(tasks.map(t => t.task))];
+                return uniqueTasks.sort();
+            };
+
+            // Handle task input with autocomplete
+            const handleTaskInput = (value, isEditing = false) => {
+                const capitalizedValue = capitalizeText(value);
+                if (isEditing) {
+                    setEditingTask(prev => ({ 
+                        ...prev, 
+                        task: capitalizedValue,
+                        category: categorizeTask(capitalizedValue)
+                    }));
+                } else {
+                    setNewTask(prev => ({ 
+                        ...prev, 
+                        task: capitalizedValue,
+                        category: categorizeTask(capitalizedValue)
+                    }));
+                }
+
+                if (value.length > 0) {
+                    const uniqueTasks = getUniqueTaskNames();
+                    const suggestions = uniqueTasks.filter(task => 
+                        task.toLowerCase().includes(value.toLowerCase()) && 
+                        task.toLowerCase() !== value.toLowerCase()
+                    ).slice(0, 5);
+                    setTaskSuggestions(suggestions);
+                    setShowSuggestions(suggestions.length > 0);
+                } else {
+                    setShowSuggestions(false);
+                }
+            };
+
+            // Select suggestion
+            const selectSuggestion = (suggestion, isEditing = false) => {
+                if (isEditing) {
+                    setEditingTask(prev => ({ 
+                        ...prev, 
+                        task: suggestion,
+                        category: categorizeTask(suggestion)
+                    }));
+                } else {
+                    setNewTask(prev => ({ 
+                        ...prev, 
+                        task: suggestion,
+                        category: categorizeTask(suggestion)
+                    }));
+                }
+                setShowSuggestions(false);
+            };
+
+            // Export to CSV with new fields
+            const exportToCSV = () => {
+                const headers = ['Task', 'Date', 'Duration', 'Notes', 'Category', 'Room'];
+                const csvContent = [
+                    headers.join(','),
+                    ...getFilteredTasks().map(task => [
+                        `"${task.task.replace(/"/g, '""')}"`,
+                        task.date,
+                        `"${(task.duration || '').replace(/"/g, '""')}"`,
+                        `"${(task.notes || '').replace(/"/g, '""')}"`,
+                        task.category,
+                        `"${(task.room || '').replace(/"/g, '""')}"`
+                    ].join(','))
+                ].join('\n');
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `task-tracker-export-${new Date().toISOString().split('T')[0]}.csv`;
+                link.click();
+            };
+
+            const addTask = () => {
+                if (newTask.task && newTask.date) {
+                    const task = { 
+                        id: Date.now(), 
+                        ...newTask,
+                        task: capitalizeText(newTask.task),
+                        room: capitalizeText(newTask.room),
+                        category: newTask.category || categorizeTask(newTask.task)
+                    };
+                    setTasks([...tasks, task]);
+                    setNewTask({
+                        task: '', 
+                        date: new Date().toISOString().split('T')[0], 
+                        duration: '', 
+                        notes: '',
+                        category: 'household',
+                        room: ''
+                    });
+                    setShowAddForm(false);
+                    setShowSuggestions(false);
+                }
+            };
+
+            const startEditing = (task) => {
+                setEditingTask({ ...task });
+            };
+
+            const saveEdit = () => {
+                if (editingTask.task && editingTask.date) {
+                    setTasks(tasks.map(task => 
+                        task.id === editingTask.id ? {
+                            ...editingTask,
+                            task: capitalizeText(editingTask.task),
+                            room: capitalizeText(editingTask.room)
+                        } : task
+                    ));
+                    setEditingTask(null);
+                    setShowSuggestions(false);
+                }
+            };
+
+            const cancelEdit = () => {
+                setEditingTask(null);
+                setShowSuggestions(false);
+            };
+
+            const deleteTask = (taskId) => {
+                setTasks(tasks.filter(task => task.id !== taskId));
+            };
+
+            const getTasksForDate = (date) => {
+                const dateStr = date.toISOString().split('T')[0];
+                const filtered = getFilteredTasks().filter(task => task.date === dateStr);
+                // Sort alphabetically by task name
+                return filtered.sort((a, b) => a.task.localeCompare(b.task));
+            };
+
+            const getDaysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+            const getFirstDayOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+            const formatDate = (date) => date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+            // Weekly view functions
+            const getWeekDates = (date) => {
+                const week = [];
+                const startOfWeek = new Date(date);
+                startOfWeek.setDate(date.getDate() - date.getDay());
+                
+                for (let i = 0; i < 7; i++) {
+                    const day = new Date(startOfWeek);
+                    day.setDate(startOfWeek.getDate() + i);
+                    week.push(day);
+                }
+                return week;
+            };
+
+            const calculateFrequencyAnalysis = () => {
+                const filtered = getFilteredTasks();
+                const taskGroups = {};
+                filtered.forEach(task => {
+                    const taskName = task.task.toLowerCase();
+                    if (!taskGroups[taskName]) taskGroups[taskName] = [];
+                    taskGroups[taskName].push(new Date(task.date));
+                });
+
+                return Object.entries(taskGroups).map(([taskName, dates]) => {
+                    dates.sort((a, b) => a - b);
+                    if (dates.length < 2) {
+                        return {
+                            task: taskName, 
+                            occurrences: dates.length, 
+                            averageDays: null,
+                            suggestedCadence: 'Need more data', 
+                            lastDone: dates[0],
+                            daysSinceLastDone: Math.floor((new Date() - dates[0]) / (1000 * 60 * 60 * 24)),
+                            category: filtered.find(t => t.task.toLowerCase() === taskName)?.category || 'household'
+                        };
+                    }
+                    let totalDays = 0;
+                    for (let i = 1; i < dates.length; i++) {
+                        totalDays += Math.floor((dates[i] - dates[i-1]) / (1000 * 60 * 60 * 24));
+                    }
+                    const averageDays = Math.round(totalDays / (dates.length - 1));
+                    let suggestedCadence = '';
+                    if (averageDays <= 7) suggestedCadence = 'Weekly';
+                    else if (averageDays <= 14) suggestedCadence = 'Bi-weekly';
+                    else if (averageDays <= 35) suggestedCadence = 'Monthly';
+                    else if (averageDays <= 70) suggestedCadence = 'Bi-monthly';
+                    else if (averageDays <= 120) suggestedCadence = 'Quarterly';
+                    else if (averageDays <= 200) suggestedCadence = 'Every 6 months';
+                    else suggestedCadence = 'Yearly';
+
+                    return {
+                        task: taskName, 
+                        occurrences: dates.length, 
+                        averageDays, 
+                        suggestedCadence,
+                        lastDone: dates[dates.length - 1],
+                        daysSinceLastDone: Math.floor((new Date() - dates[dates.length - 1]) / (1000 * 60 * 60 * 24)),
+                        category: filtered.find(t => t.task.toLowerCase() === taskName)?.category || 'household'
+                    };
+                }).sort((a, b) => b.occurrences - a.occurrences);
+            };
+
+            // Inline editable text component
+            const InlineEditText = ({ task, field, value, className = "" }) => {
+                const isEditing = inlineEditing?.taskId === task.id && inlineEditing?.field === field;
+                const [editValue, setEditValue] = React.useState(value);
+
+                React.useEffect(() => {
+                    setEditValue(value);
+                }, [value]);
+
+                const handleKeyPress = (e) => {
+                    if (e.key === 'Enter') {
+                        saveInlineEdit(task.id, field, editValue);
+                    } else if (e.key === 'Escape') {
+                        cancelInlineEdit();
+                        setEditValue(value);
+                    }
+                };
+
+                const handleBlur = () => {
+                    saveInlineEdit(task.id, field, editValue);
+                };
+
+                if (isEditing) {
+                    return React.createElement('input', {
+                        className: `inline-edit ${className}`,
+                        value: editValue,
+                        onChange: (e) => setEditValue(e.target.value),
+                        onKeyDown: handleKeyPress,
+                        onBlur: handleBlur,
+                        autoFocus: true
+                    });
+                }
+
+                return React.createElement('span', {
+                    className: `cursor-pointer hover:bg-blue-50 hover:bg-opacity-50 rounded px-1 ${className}`,
+                    onClick: () => startInlineEdit(task.id, field),
+                    title: `Click to edit ${field}`
+                }, value || `Click to add ${field}`);
+            };
+
+            // Import form component
+            const renderImportForm = () => {
+                return React.createElement('div', { className: "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" },
+                    React.createElement('div', { className: "bg-white rounded-lg p-6 w-full max-w-4xl max-h-96 overflow-hidden flex flex-col" },
+                        React.createElement('div', { className: "flex justify-between items-center mb-4" },
+                            React.createElement('h3', { className: "text-lg font-bold" }, 'Import Tasks from CSV'),
+                            React.createElement('button', {
+                                onClick: () => setShowImportForm(false),
+                                className: "text-gray-500 hover:text-gray-700"
+                            }, React.createElement(X, { className: "w-6 h-6" }))
+                        ),
+                        
+                        React.createElement('div', { className: "mb-4" },
+                            React.createElement('label', { className: "block text-sm font-medium mb-2" }, 'Upload CSV File:'),
+                            React.createElement('input', {
+                                type: "file",
+                                accept: ".csv,.json",
+                                onChange: handleFileUpload,
+                                className: "w-full border rounded px-3 py-2"
+                            })
+                        ),
+                        
+                        React.createElement('div', { className: "mb-4" },
+                            React.createElement('label', { className: "block text-sm font-medium mb-2" }, 'Or paste CSV data:'),
+                            React.createElement('textarea', {
+                                className: "w-full border rounded px-3 py-2 h-32 font-mono text-sm",
+                                value: importData,
+                                onChange: (e) => handleImportDataChange(e.target.value),
+                                placeholder: "Task,Date,Duration,Notes,Category,Room\nCleaned Kitchen,2025-08-20,15 minutes,Deep clean,household,Kitchen"
+                            })
+                        ),
+                        
+                        importPreview.length > 0 && React.createElement('div', { className: "flex-1 overflow-auto mb-4" },
+                            React.createElement('h4', { className: "font-semibold mb-2" }, 
+                                `Preview (${importPreview.length} tasks):`
+                            ),
+                            // Show duplicate detection summary
+                            React.createElement('div', { className: "mb-2 p-2 bg-blue-50 rounded text-sm" },
+                                React.createElement('div', { className: "font-medium text-blue-800" }, 'Import Summary:'),
+                                React.createElement('div', { className: "text-blue-700" },
+                                    `${importPreview.filter(task => !isDuplicateTask(task, tasks)).length} new tasks will be added`
+                                ),
+                                importPreview.filter(task => isDuplicateTask(task, tasks)).length > 0 && 
+                                React.createElement('div', { className: "text-orange-700" },
+                                    `${importPreview.filter(task => isDuplicateTask(task, tasks)).length} duplicates will be skipped`
+                                )
+                            ),
+                            React.createElement('div', { className: "border rounded max-h-32 overflow-auto" },
+                                React.createElement('table', { className: "w-full text-sm" },
+                                    React.createElement('thead', { className: "bg-gray-50" },
+                                        React.createElement('tr', {},
+                                            React.createElement('th', { className: "px-2 py-1 text-left" }, 'Status'),
+                                            React.createElement('th', { className: "px-2 py-1 text-left" }, 'Task'),
+                                            React.createElement('th', { className: "px-2 py-1 text-left" }, 'Date'),
+                                            React.createElement('th', { className: "px-2 py-1 text-left" }, 'Category'),
+                                            React.createElement('th', { className: "px-2 py-1 text-left" }, 'Room'),
+                                            React.createElement('th', { className: "px-2 py-1 text-left" }, 'Duration'),
+                                            React.createElement('th', { className: "px-2 py-1 text-left" }, 'Notes')
+                                        )
+                                    ),
+                                    React.createElement('tbody', {},
+                                        ...importPreview.slice(0, 10).map((task, index) => {
+                                            const isDuplicate = isDuplicateTask(task, tasks);
+                                            return React.createElement('tr', { 
+                                                key: index, 
+                                                className: `border-t ${isDuplicate ? 'bg-orange-50' : 'bg-green-50'}` 
+                                            },
+                                                React.createElement('td', { className: "px-2 py-1" },
+                                                    React.createElement('span', { 
+                                                        className: `text-xs px-2 py-1 rounded ${isDuplicate ? 'bg-orange-200 text-orange-800' : 'bg-green-200 text-green-800'}` 
+                                                    }, isDuplicate ? 'Skip' : 'New')
+                                                ),
+                                                React.createElement('td', { className: "px-2 py-1" }, task.task),
+                                                React.createElement('td', { className: "px-2 py-1" }, task.date),
+                                                React.createElement('td', { className: "px-2 py-1" },
+                                                    React.createElement('span', { className: `text-xs px-2 py-1 rounded ${categories[task.category]?.color || 'bg-gray-200'}` },
+                                                        `${categories[task.category]?.emoji || '📝'} ${categories[task.category]?.name || task.category}`
+                                                    )
+                                                ),
+                                                React.createElement('td', { className: "px-2 py-1" }, task.room),
+                                                React.createElement('td', { className: "px-2 py-1" }, task.duration),
+                                                React.createElement('td', { className: "px-2 py-1" }, task.notes)
+                                            );
+                                        }),
+                                        importPreview.length > 10 && React.createElement('tr', {},
+                                            React.createElement('td', { colSpan: 7, className: "px-2 py-1 text-center text-gray-500" }, 
+                                                `... and ${importPreview.length - 10} more tasks`
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        ),
+                        
+                        React.createElement('div', { className: "flex justify-between items-center" },
+                            React.createElement('div', { className: "text-sm text-gray-600" },
+                                'CSV format: Task,Date,Duration,Notes,Category,Room (Duration, Notes, Category, and Room are optional)'
+                            ),
+                            React.createElement('div', { className: "flex gap-2" },
+                                React.createElement('button', {
+                                    onClick: () => setShowImportForm(false),
+                                    className: "px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                                }, 'Cancel'),
+                                React.createElement('button', {
+                                    onClick: importTasks,
+                                    disabled: importPreview.length === 0,
+                                    className: `px-4 py-2 rounded text-white ${importPreview.length > 0 ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-400 cursor-not-allowed'}`
+                                }, 
+                                    importPreview.length > 0 ? 
+                                        `Import ${importPreview.filter(task => !isDuplicateTask(task, tasks)).length} New Tasks` :
+                                        'Import 0 Tasks'
+                                )
+                            )
+                        )
+                    )
+                );
+            };
+
+            // Day detail popup
+            const renderDayDetail = () => {
+                if (!selectedDay) return null;
+                
+                const dayTasks = getTasksForDate(selectedDay);
+                const dayStr = selectedDay.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+
+                return React.createElement('div', { className: "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" },
+                    React.createElement('div', { className: "bg-white rounded-lg p-6 w-full max-w-2xl max-h-96 overflow-y-auto" },
+                        React.createElement('div', { className: "flex justify-between items-center mb-4" },
+                            React.createElement('h3', { className: "text-lg font-bold" }, `Tasks for ${dayStr}`),
+                            React.createElement('button', {
+                                onClick: () => setSelectedDay(null),
+                                className: "text-gray-500 hover:text-gray-700"
+                            }, React.createElement(X, { className: "w-6 h-6" }))
+                        ),
+                        dayTasks.length === 0 ? 
+                            React.createElement('p', { className: "text-gray-500 text-center py-8" }, 'No tasks recorded for this day') :
+                            React.createElement('div', { className: "space-y-3" },
+                                ...dayTasks.map(task => 
+                                    React.createElement('div', { 
+                                        key: task.id, 
+                                        className: `border rounded-lg p-4 hover:bg-gray-50 task-item ${categories[task.category]?.color || 'bg-gray-100'}`
+                                    },
+                                        React.createElement('div', { className: "flex justify-between items-start mb-2" },
+                                            React.createElement('div', { className: "flex items-center gap-2 flex-1" },
+                                                React.createElement('span', { className: "text-lg" }, categories[task.category]?.emoji || '📝'),
+                                                React.createElement(InlineEditText, { 
+                                                    task: task, 
+                                                    field: 'task', 
+                                                    value: task.task, 
+                                                    className: "font-semibold text-lg flex-1" 
+                                                })
+                                            ),
+                                            React.createElement('span', { 
+                                                className: `text-xs px-2 py-1 rounded ${categories[task.category]?.color || 'bg-gray-200'}` 
+                                            }, categories[task.category]?.name || task.category)
+                                        ),
+                                        task.room && React.createElement('p', { className: "text-sm text-gray-600 mb-1" },
+                                            React.createElement('strong', {}, '📍 Room: '),
+                                            React.createElement(InlineEditText, { 
+                                                task: task, 
+                                                field: 'room', 
+                                                value: task.room, 
+                                                className: "text-sm" 
+                                            })
+                                        ),
+                                        task.duration && React.createElement('p', { className: "text-sm text-gray-600 mb-1" },
+                                            React.createElement('strong', {}, '⏱️ Duration: '),
+                                            React.createElement(InlineEditText, { 
+                                                task: task, 
+                                                field: 'duration', 
+                                                value: task.duration, 
+                                                className: "text-sm" 
+                                            })
+                                        ),
+                                        task.notes && React.createElement('p', { className: "text-sm text-gray-600" },
+                                            React.createElement('strong', {}, '📝 Notes: '),
+                                            React.createElement(InlineEditText, { 
+                                                task: task, 
+                                                field: 'notes', 
+                                                value: task.notes, 
+                                                className: "text-sm" 
+                                            })
+                                        )
+                                    )
+                                )
+                            ),
+                        React.createElement('div', { className: "mt-6 flex justify-center" },
+                            React.createElement('button', {
+                                onClick: () => {
+                                    setSelectedDay(null);
+                                    setNewTask(prev => ({ ...prev, date: selectedDay.toISOString().split('T')[0] }));
+                                    setShowAddForm(true);
+                                },
+                                className: "flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                            },
+                                React.createElement(Plus, { className: "w-4 h-4" }),
+                                'Add Task for This Day'
+                            )
+                        )
+                    )
+                );
+            };
+
+            // Monthly calendar
+            const renderMonthlyCalendar = () => {
+                const daysInMonth = getDaysInMonth(selectedMonth);
+                const firstDay = getFirstDayOfMonth(selectedMonth);
+                const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const calendarDays = [];
+                
+                for (let i = 0; i < firstDay; i++) {
+                    calendarDays.push(React.createElement('div', { key: `empty-${i}`, className: "p-2 h-24 border border-gray-200" }));
+                }
+                
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const currentDate = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), day);
+                    const dayTasks = getTasksForDate(currentDate);
+                    
+                    calendarDays.push(
+                        React.createElement('div', { 
+                            key: day, 
+                            className: "p-1 h-24 border border-gray-200 bg-white hover:bg-gray-50 cursor-pointer",
+                            onClick: () => setSelectedDay(currentDate)
+                        },
+                            React.createElement('div', { className: "flex justify-between items-center mb-1" },
+                                React.createElement('span', { className: "font-semibold text-sm" }, day),
+                                dayTasks.length > 0 && React.createElement('span', { 
+                                    className: "text-xs bg-blue-500 text-white rounded-full px-2 py-0.5" 
+                                }, dayTasks.length)
+                            ),
+                            React.createElement('div', { className: "space-y-1" },
+                                ...dayTasks.slice(0, 2).map(task => {
+                                    const taskText = task.task.length > 12 ? task.task.substring(0, 12) + '...' : task.task;
+                                    return React.createElement('div', { 
+                                        key: task.id, 
+                                        className: `text-xs rounded px-1 py-0.5 truncate border ${categories[task.category]?.color || 'bg-gray-100'}`,
+                                        title: `${categories[task.category]?.emoji || '📝'} ${task.task}${task.room ? ` (${task.room})` : ''}`
+                                    }, 
+                                        React.createElement('span', { className: "mr-1" }, categories[task.category]?.emoji || '📝'),
+                                        taskText
+                                    );
+                                }),
+                                dayTasks.length > 2 && React.createElement('div', { 
+                                    className: "text-xs text-gray-500 font-medium" 
+                                }, `+${dayTasks.length - 2} more`)
+                            )
+                        )
+                    );
+                }
+
+                return React.createElement('div', { className: "bg-white rounded-lg shadow p-4" },
+                    React.createElement('div', { className: "flex justify-between items-center mb-4" },
+                        React.createElement('h2', { className: "text-xl font-bold" }, formatDate(selectedMonth)),
+                        React.createElement('div', { className: "flex gap-2" },
+                            React.createElement('button', {
+                                onClick: () => setSelectedMonth(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() - 1, 1)),
+                                className: "px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                            }, '←'),
+                            React.createElement('button', {
+                                onClick: () => setSelectedMonth(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 1)),
+                                className: "px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                            }, '→')
+                        )
+                    ),
+                    React.createElement('div', { className: "grid grid-cols-7 gap-0 mb-2" },
+                        ...days.map(day => 
+                            React.createElement('div', { 
+                                key: day, 
+                                className: "p-2 font-semibold text-center bg-gray-100 border border-gray-300" 
+                            }, day)
+                        )
+                    ),
+                    React.createElement('div', { className: "grid grid-cols-7 gap-0 border border-gray-300" },
+                        ...calendarDays
+                    ),
+                    React.createElement('p', { className: "text-sm text-gray-500 mt-2 text-center" },
+                        'Click any day to see full task details and edit inline'
+                    )
+                );
+            };
+
+            // Weekly calendar
+            const renderWeeklyCalendar = () => {
+                const weekDates = getWeekDates(selectedWeek);
+                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+                return React.createElement('div', { className: "bg-white rounded-lg shadow p-4" },
+                    React.createElement('div', { className: "flex justify-between items-center mb-4" },
+                        React.createElement('h2', { className: "text-xl font-bold" }, 
+                            `Week of ${weekDates[0].toLocaleDateString()} - ${weekDates[6].toLocaleDateString()}`
+                        ),
+                        React.createElement('div', { className: "flex gap-2" },
+                            React.createElement('button', {
+                                onClick: () => {
+                                    const newWeek = new Date(selectedWeek);
+                                    newWeek.setDate(selectedWeek.getDate() - 7);
+                                    setSelectedWeek(newWeek);
+                                },
+                                className: "px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                            }, '← Previous'),
+                            React.createElement('button', {
+                                onClick: () => {
+                                    const newWeek = new Date(selectedWeek);
+                                    newWeek.setDate(selectedWeek.getDate() + 7);
+                                    setSelectedWeek(newWeek);
+                                },
+                                className: "px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                            }, 'Next →')
+                        )
+                    ),
+                    React.createElement('div', { className: "grid grid-cols-1 md:grid-cols-7 gap-4" },
+                        ...weekDates.map((date, index) => {
+                            const dayTasks = getTasksForDate(date);
+                            const isToday = date.toDateString() === new Date().toDateString();
+                            
+                            return React.createElement('div', { 
+                                key: index,
+                                className: `border rounded-lg p-3 min-h-32 cursor-pointer hover:bg-gray-50 ${isToday ? 'bg-blue-50 border-blue-300' : ''}`,
+                                onClick: () => setSelectedDay(date)
+                            },
+                                React.createElement('div', { className: "font-semibold mb-2 text-center" },
+                                    React.createElement('div', { className: "text-sm text-gray-600" }, days[index]),
+                                    React.createElement('div', { className: `text-lg ${isToday ? 'text-blue-600' : ''}` }, 
+                                        date.getDate()
+                                    )
+                                ),
+                                React.createElement('div', { className: "space-y-1" },
+                                    ...dayTasks.map(task => {
+                                        const taskText = task.task.length > 25 ? task.task.substring(0, 25) + '...' : task.task;
+                                        return React.createElement('div', { 
+                                            key: task.id, 
+                                            className: `text-xs rounded px-2 py-1 truncate border ${categories[task.category]?.color || 'bg-gray-100'}`,
+                                            title: `${categories[task.category]?.emoji || '📝'} ${task.task}${task.room ? ` (${task.room})` : ''}`
+                                        }, 
+                                            React.createElement('span', { className: "mr-1" }, categories[task.category]?.emoji || '📝'),
+                                            taskText
+                                        );
+                                    })
+                                ),
+                                dayTasks.length === 0 && React.createElement('div', { 
+                                    className: "text-xs text-gray-400 text-center mt-4" 
+                                }, 'No tasks')
+                            );
+                        })
+                    ),
+                    React.createElement('p', { className: "text-sm text-gray-500 mt-4 text-center" },
+                        'Click any day to see full task details and edit inline'
+                    )
+                );
+            };
+
+            const renderAnalysis = () => {
+                const analysis = calculateFrequencyAnalysis();
+                const filteredAnalysis = searchTerm ? analysis.filter(item => item.task.toLowerCase().includes(searchTerm.toLowerCase())) : analysis;
+
+                return React.createElement('div', { className: "bg-white rounded-lg shadow p-4" },
+                    React.createElement('div', { className: "flex justify-between items-center mb-4" },
+                        React.createElement('h2', { className: "text-xl font-bold" }, 'Task Frequency Analysis'),
+                        React.createElement('div', { className: "flex items-center gap-2" },
+                            React.createElement(Search, { className: "w-4 h-4" }),
+                            React.createElement('input', {
+                                type: "text",
+                                placeholder: "Search tasks...",
+                                className: "border rounded px-2 py-1",
+                                value: searchTerm,
+                                onChange: (e) => setSearchTerm(e.target.value)
+                            })
+                        )
+                    ),
+                    React.createElement('div', { className: "grid gap-4" },
+                        ...filteredAnalysis.map((item, index) =>
+                            React.createElement('div', { 
+                                key: index, 
+                                className: `border rounded p-4 hover:bg-gray-50 task-item ${categories[item.category]?.color || 'bg-gray-100'}`
+                            },
+                                React.createElement('div', { className: "flex justify-between items-start mb-2" },
+                                    React.createElement('div', { className: "flex items-center gap-2" },
+                                        React.createElement('span', { className: "text-xl" }, categories[item.category]?.emoji || '📝'),
+                                        React.createElement('h3', { className: "font-semibold capitalize text-lg" }, item.task)
+                                    ),
+                                    React.createElement('div', { className: "flex items-center gap-2" },
+                                        React.createElement('span', { 
+                                            className: `text-xs px-2 py-1 rounded ${categories[item.category]?.color || 'bg-gray-200'}` 
+                                        }, categories[item.category]?.name || item.category),
+                                        React.createElement('span', { className: "bg-blue-100 px-2 py-1 rounded text-sm" },
+                                            `${item.occurrences} times`
+                                        )
+                                    )
+                                ),
+                                React.createElement('div', { className: "grid grid-cols-2 md:grid-cols-4 gap-4 text-sm" },
+                                    React.createElement('div', {},
+                                        React.createElement('span', { className: "text-gray-600" }, 'Average Frequency:'),
+                                        React.createElement('div', { className: "font-semibold" },
+                                            item.averageDays ? `${item.averageDays} days` : 'N/A'
+                                        )
+                                    ),
+                                    React.createElement('div', {},
+                                        React.createElement('span', { className: "text-gray-600" }, 'Suggested Cadence:'),
+                                        React.createElement('div', { className: "font-semibold text-green-600" }, item.suggestedCadence)
+                                    ),
+                                    React.createElement('div', {},
+                                        React.createElement('span', { className: "text-gray-600" }, 'Last Done:'),
+                                        React.createElement('div', { className: "font-semibold" },
+                                            item.lastDone.toLocaleDateString()
+                                        )
+                                    ),
+                                    React.createElement('div', {},
+                                        React.createElement('span', { className: "text-gray-600" }, 'Days Since:'),
+                                        React.createElement('div', { 
+                                            className: `font-semibold ${item.daysSinceLastDone > (item.averageDays || 30) ? 'text-red-600' : 'text-green-600'}` 
+                                        }, `${item.daysSinceLastDone} days`)
+                                    )
+                                )
+                            )
+                        )
+                    )
+                );
+            };
+
+            const renderTaskForm = (isEditing = false) => {
+                const currentTask = isEditing ? editingTask : newTask;
+                const setCurrentTask = isEditing ? setEditingTask : setNewTask;
+
+                return React.createElement('div', { className: "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" },
+                    React.createElement('div', { className: "bg-white rounded-lg p-6 w-full max-w-md" },
+                        React.createElement('h3', { className: "text-lg font-bold mb-4" },
+                            isEditing ? 'Edit Task' : 'Add New Task'
+                        ),
+                        React.createElement('div', { className: "space-y-4" },
+                            React.createElement('div', { className: "relative" },
+                                React.createElement('label', { className: "block text-sm font-medium mb-1" }, 'Task Description'),
+                                React.createElement('input', {
+                                    type: "text",
+                                    className: "w-full border rounded px-3 py-2",
+                                    value: currentTask.task,
+                                    onChange: (e) => handleTaskInput(e.target.value, isEditing),
+                                    placeholder: "e.g., Cleaned kitchen sink",
+                                    onFocus: () => {
+                                        if (currentTask.task.length > 0) {
+                                            const uniqueTasks = getUniqueTaskNames();
+                                            const suggestions = uniqueTasks.filter(task => 
+                                                task.toLowerCase().includes(currentTask.task.toLowerCase()) && 
+                                                task.toLowerCase() !== currentTask.task.toLowerCase()
+                                            ).slice(0, 5);
+                                            setTaskSuggestions(suggestions);
+                                            setShowSuggestions(suggestions.length > 0);
+                                        }
+                                    },
+                                    onBlur: () => {
+                                        setTimeout(() => setShowSuggestions(false), 200);
+                                    }
+                                }),
+                                showSuggestions && React.createElement('div', { className: "absolute z-10 w-full bg-white border border-gray-300 rounded-b-md shadow-lg max-h-40 overflow-y-auto" },
+                                    ...taskSuggestions.map((suggestion, index) =>
+                                        React.createElement('div', {
+                                            key: index,
+                                            className: "px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm text-gray-600",
+                                            onClick: () => selectSuggestion(suggestion, isEditing)
+                                        }, suggestion)
+                                    )
+                                )
+                            ),
+                            React.createElement('div', {},
+                                React.createElement('label', { className: "block text-sm font-medium mb-1" }, 'Category'),
+                                React.createElement('select', {
+                                    className: "w-full border rounded px-3 py-2",
+                                    value: currentTask.category,
+                                    onChange: (e) => setCurrentTask({...currentTask, category: e.target.value})
+                                },
+                                    ...Object.entries(categories).map(([key, cat]) =>
+                                        React.createElement('option', { key: key, value: key }, 
+                                            `${cat.emoji} ${cat.name}`
+                                        )
+                                    )
+                                )
+                            ),
+                            React.createElement('div', {},
+                                React.createElement('label', { className: "block text-sm font-medium mb-1" }, 'Room (optional)'),
+                                React.createElement('input', {
+                                    type: "text",
+                                    className: "w-full border rounded px-3 py-2",
+                                    value: currentTask.room,
+                                    onChange: (e) => setCurrentTask({...currentTask, room: capitalizeText(e.target.value)}),
+                                    placeholder: "e.g., Kitchen, Washroom, Living Room"
+                                })
+                            ),
+                            React.createElement('div', {},
+                                React.createElement('label', { className: "block text-sm font-medium mb-1" }, 'Date'),
+                                React.createElement('input', {
+                                    type: "date",
+                                    className: "w-full border rounded px-3 py-2",
+                                    value: currentTask.date,
+                                    onChange: (e) => setCurrentTask({...currentTask, date: e.target.value})
+                                })
+                            ),
+                            React.createElement('div', {},
+                                React.createElement('label', { className: "block text-sm font-medium mb-1" }, 'Duration (optional)'),
+                                React.createElement('input', {
+                                    type: "text",
+                                    className: "w-full border rounded px-3 py-2",
+                                    value: currentTask.duration,
+                                    onChange: (e) => setCurrentTask({...currentTask, duration: e.target.value}),
+                                    placeholder: "e.g., 15 minutes"
+                                })
+                            ),
+                            React.createElement('div', {},
+                                React.createElement('label', { className: "block text-sm font-medium mb-1" }, 'Notes (optional)'),
+                                React.createElement('textarea', {
+                                    className: "w-full border rounded px-3 py-2 h-20",
+                                    value: currentTask.notes,
+                                    onChange: (e) => setCurrentTask({...currentTask, notes: e.target.value}),
+                                    placeholder: "Any additional notes..."
+                                })
+                            )
+                        ),
+                        React.createElement('div', { className: "flex gap-2 mt-6" },
+                            React.createElement('button', {
+                                onClick: isEditing ? saveEdit : addTask,
+                                className: "flex items-center gap-2 flex-1 bg-blue-500 text-white rounded py-2 hover:bg-blue-600 justify-center"
+                            },
+                                React.createElement(Check, { className: "w-4 h-4" }),
+                                isEditing ? 'Save Changes' : 'Add Task'
+                            ),
+                            React.createElement('button', {
+                                onClick: isEditing ? cancelEdit : () => setShowAddForm(false),
+                                className: "flex items-center gap-2 flex-1 bg-gray-300 text-gray-700 rounded py-2 hover:bg-gray-400 justify-center"
+                            },
+                                React.createElement(X, { className: "w-4 h-4" }),
+                                'Cancel'
+                            ),
+                            isEditing && React.createElement('button', {
+                                onClick: () => {
+                                    deleteTask(editingTask.id);
+                                    setEditingTask(null);
+                                },
+                                className: "px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600",
+                                title: "Delete task"
+                            }, 'Delete')
+                        )
+                    )
+                );
+            };
+
+            // Category statistics for filtered views
+            const getCategoryStats = () => {
+                const filtered = getFilteredTasks();
+                const stats = {
+                    total: filtered.length,
+                    today: filtered.filter(t => t.date === new Date().toISOString().split('T')[0]).length,
+                    uniqueTypes: [...new Set(filtered.map(t => t.task.toLowerCase()))].length
+                };
+                return stats;
+            };
+
+            return React.createElement('div', { className: "min-h-screen bg-gray-100 p-4" },
+                React.createElement('div', { className: "max-w-6xl mx-auto" },
+                    React.createElement('div', { className: "bg-white rounded-lg shadow p-4 mb-4" },
+                        React.createElement('div', { className: "flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4" },
+                            React.createElement('h1', { className: "text-2xl font-bold text-gray-800" }, 'Task Frequency Tracker'),
+                            React.createElement('div', { className: "flex flex-wrap gap-2" },
+                                React.createElement('select', {
+                                    value: categoryFilter,
+                                    onChange: (e) => setCategoryFilter(e.target.value),
+                                    className: "flex items-center gap-2 px-3 py-2 border rounded bg-white"
+                                },
+                                    React.createElement('option', { value: "all" }, "🔍 All Categories"),
+                                    ...Object.entries(categories).map(([key, cat]) =>
+                                        React.createElement('option', { key: key, value: key }, 
+                                            `${cat.emoji} ${cat.name}`
+                                        )
+                                    )
+                                ),
+                                React.createElement('button', {
+                                    onClick: () => setCurrentView('monthly'),
+                                    className: `flex items-center gap-2 px-4 py-2 rounded ${currentView === 'monthly' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`
+                                },
+                                    React.createElement(Calendar, { className: "w-4 h-4" }),
+                                    'Monthly'
+                                ),
+                                React.createElement('button', {
+                                    onClick: () => setCurrentView('weekly'),
+                                    className: `flex items-center gap-2 px-4 py-2 rounded ${currentView === 'weekly' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`
+                                },
+                                    React.createElement(Eye, { className: "w-4 h-4" }),
+                                    'Weekly'
+                                ),
+                                React.createElement('button', {
+                                    onClick: () => setCurrentView('analysis'),
+                                    className: `flex items-center gap-2 px-4 py-2 rounded ${currentView === 'analysis' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`
+                                },
+                                    React.createElement(BarChart3, { className: "w-4 h-4" }),
+                                    'Analysis'
+                                ),
+                                React.createElement('button', {
+                                    onClick: exportToCSV,
+                                    className: "flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600",
+                                    title: "Export to CSV"
+                                },
+                                    React.createElement(Download, { className: "w-4 h-4" }),
+                                    'Export'
+                                ),
+                                React.createElement('button', {
+                                    onClick: () => setShowImportForm(true),
+                                    className: "flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600",
+                                    title: "Import from CSV"
+                                },
+                                    React.createElement(Upload, { className: "w-4 h-4" }),
+                                    'Import'
+                                ),
+                                React.createElement('button', {
+                                    onClick: shareData,
+                                    className: "flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600",
+                                    title: "Download data file to share between devices"
+                                },
+                                    React.createElement(Share, { className: "w-4 h-4" }),
+                                    'Share'
+                                ),
+                                React.createElement('button', {
+                                    onClick: () => setShowAddForm(true),
+                                    className: "flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                },
+                                    React.createElement(Plus, { className: "w-4 h-4" }),
+                                    'Add Task'
+                                )
+                            )
+                        )
+                    ),
+
+                    React.createElement('div', { className: "grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4" },
+                        React.createElement('div', { className: "bg-white rounded-lg shadow p-4" },
+                            React.createElement('div', { className: "flex items-center gap-3" },
+                                React.createElement(Clock, { className: "w-8 h-8 text-blue-500" }),
+                                React.createElement('div', {},
+                                    React.createElement('div', { className: "text-2xl font-bold" }, getCategoryStats().total),
+                                    React.createElement('div', { className: "text-gray-600 text-sm" }, 
+                                        categoryFilter === 'all' ? 'Total Tasks Logged' : `${categories[categoryFilter]?.name || categoryFilter} Tasks`
+                                    )
+                                )
+                            )
+                        ),
+                        React.createElement('div', { className: "bg-white rounded-lg shadow p-4" },
+                            React.createElement('div', { className: "flex items-center gap-3" },
+                                React.createElement(TrendingUp, { className: "w-8 h-8 text-green-500" }),
+                                React.createElement('div', {},
+                                    React.createElement('div', { className: "text-2xl font-bold" }, getCategoryStats().uniqueTypes),
+                                    React.createElement('div', { className: "text-gray-600 text-sm" }, 'Unique Task Types')
+                                )
+                            )
+                        ),
+                        React.createElement('div', { className: "bg-white rounded-lg shadow p-4" },
+                            React.createElement('div', { className: "flex items-center gap-3" },
+                                React.createElement(Calendar, { className: "w-8 h-8 text-purple-500" }),
+                                React.createElement('div', {},
+                                    React.createElement('div', { className: "text-2xl font-bold" }, getCategoryStats().today),
+                                    React.createElement('div', { className: "text-gray-600 text-sm" }, 'Tasks Today')
+                                )
+                            )
+                        )
+                    ),
+
+                    currentView === 'monthly' && renderMonthlyCalendar(),
+                    currentView === 'weekly' && renderWeeklyCalendar(),
+                    currentView === 'analysis' && renderAnalysis(),
+                    
+                    showAddForm && renderTaskForm(false),
+                    editingTask && renderTaskForm(true),
+                    selectedDay && renderDayDetail(),
+                    showImportForm && renderImportForm()
+                )
+            );
+        };
+
+        ReactDOM.render(React.createElement(TaskTracker), document.getElementById('root'));
+    </script>
+</body>
+</html>
