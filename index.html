@@ -1,0 +1,594 @@
+import React, { useState, useEffect } from 'react';
+import { Calendar, Plus, BarChart3, Clock, TrendingUp, Search, Edit2, Download, X, Check } from 'lucide-react';
+
+const TaskTracker = () => {
+  // Pre-populated data based on your tracking
+  const initialTasks = [
+    { id: 1, task: "Wiped down kitchen sink", date: "2025-07-30", duration: "", notes: "" },
+    { id: 2, task: "Cleaned washroom sink", date: "2025-08-01", duration: "", notes: "" },
+    { id: 3, task: "Cleaned toilet", date: "2025-08-01", duration: "", notes: "" },
+    { id: 4, task: "Cleaned washroom sink", date: "2025-08-09", duration: "", notes: "" },
+    { id: 5, task: "Cleaned toilet", date: "2025-08-09", duration: "", notes: "" },
+    { id: 6, task: "Cleaned shoes in front of door", date: "2025-08-09", duration: "", notes: "" },
+    { id: 7, task: "Cleaned bathtub", date: "2025-08-09", duration: "", notes: "" },
+    { id: 8, task: "Painted toe nails", date: "2025-08-03", duration: "", notes: "" },
+    { id: 9, task: "Folded almost all laundry", date: "2025-08-09", duration: "", notes: "" },
+    { id: 10, task: "Swept front room/dining", date: "2025-08-10", duration: "", notes: "" },
+    { id: 11, task: "Sorted laundry into shades", date: "2025-08-17", duration: "", notes: "" },
+    { id: 12, task: "Cleaned kitchen sink", date: "2025-08-17", duration: "", notes: "" },
+    { id: 13, task: "Hung up and put away clean clothes I tried on but didn't wear", date: "2025-08-17", duration: "", notes: "" },
+    { id: 14, task: "Put away purses I tried on but didn't wear", date: "2025-08-17", duration: "", notes: "" },
+    { id: 15, task: "Tidied up foyer", date: "2025-08-17", duration: "", notes: "" },
+    { id: 16, task: "Stacked shoes in front entry way", date: "2025-08-17", duration: "", notes: "" },
+    { id: 17, task: "Tidied office desk surface", date: "2025-08-17", duration: "", notes: "" },
+    { id: 18, task: "Cleaned all clutter off white couch", date: "2025-08-17", duration: "", notes: "" },
+    { id: 19, task: "Cleaned all clutter off wardrobe chair", date: "2025-08-17", duration: "", notes: "" },
+    { id: 20, task: "Kitchen counter and floor should be cleaned", date: "2025-08-15", duration: "", notes: "Identified need - not yet completed" },
+    { id: 21, task: "Shaved Mirek", date: "2025-08-10", duration: "", notes: "" },
+    { id: 22, task: "Identified Mirek needs to be shaved", date: "2025-08-16", duration: "", notes: "Identified need - not yet completed" },
+    { id: 23, task: "Shaved Mirek", date: "2025-08-04", duration: "", notes: "" },
+    { id: 24, task: "Showered Mirek", date: "2025-08-04", duration: "", notes: "" },
+    { id: 25, task: "Painted nails", date: "2025-07-29", duration: "", notes: "" },
+    { id: 26, task: "Painted nails", date: "2025-08-11", duration: "", notes: "" },
+    { id: 27, task: "Showered Mirek", date: "2025-07-12", duration: "", notes: "" },
+    { id: 28, task: "Washed Mirek Hair", date: "2025-07-12", duration: "", notes: "" },
+    { id: 29, task: "Did Mirek's Nails", date: "2025-07-13", duration: "", notes: "" },
+    { id: 30, task: "Shaved Mirek", date: "2025-07-09", duration: "", notes: "" },
+    { id: 31, task: "Shaved Mirek", date: "2025-07-22", duration: "", notes: "" }
+  ];
+
+  const [tasks, setTasks] = useState(() => {
+    const saved = localStorage.getItem('taskTrackerTasks');
+    return saved ? JSON.parse(saved) : initialTasks;
+  });
+  
+  const [currentView, setCurrentView] = useState('calendar');
+  const [selectedMonth, setSelectedMonth] = useState(new Date(2025, 7, 1)); // August 2025
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [editingTask, setEditingTask] = useState(null);
+  const [taskSuggestions, setTaskSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  
+  const [newTask, setNewTask] = useState({
+    task: '',
+    date: new Date().toISOString().split('T')[0],
+    duration: '',
+    notes: ''
+  });
+
+  useEffect(() => {
+    localStorage.setItem('taskTrackerTasks', JSON.stringify(tasks));
+  }, [tasks]);
+
+  // Get unique task names for autocomplete
+  const getUniqueTaskNames = () => {
+    const uniqueTasks = [...new Set(tasks.map(t => t.task))];
+    return uniqueTasks.sort();
+  };
+
+  // Handle task input with autocomplete
+  const handleTaskInput = (value, isEditing = false) => {
+    if (isEditing) {
+      setEditingTask(prev => ({ ...prev, task: value }));
+    } else {
+      setNewTask(prev => ({ ...prev, task: value }));
+    }
+
+    if (value.length > 0) {
+      const uniqueTasks = getUniqueTaskNames();
+      const suggestions = uniqueTasks.filter(task => 
+        task.toLowerCase().includes(value.toLowerCase()) && 
+        task.toLowerCase() !== value.toLowerCase()
+      ).slice(0, 5);
+      setTaskSuggestions(suggestions);
+      setShowSuggestions(suggestions.length > 0);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  // Select suggestion
+  const selectSuggestion = (suggestion, isEditing = false) => {
+    if (isEditing) {
+      setEditingTask(prev => ({ ...prev, task: suggestion }));
+    } else {
+      setNewTask(prev => ({ ...prev, task: suggestion }));
+    }
+    setShowSuggestions(false);
+  };
+
+  // Export to CSV
+  const exportToCSV = () => {
+    const headers = ['Task', 'Date', 'Duration', 'Notes'];
+    const csvContent = [
+      headers.join(','),
+      ...tasks.map(task => [
+        `"${task.task.replace(/"/g, '""')}"`,
+        task.date,
+        `"${(task.duration || '').replace(/"/g, '""')}"`,
+        `"${(task.notes || '').replace(/"/g, '""')}"`
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `task-tracker-export-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+  };
+
+  const addTask = () => {
+    if (newTask.task && newTask.date) {
+      const task = {
+        id: Date.now(),
+        ...newTask
+      };
+      setTasks([...tasks, task]);
+      setNewTask({
+        task: '',
+        date: new Date().toISOString().split('T')[0],
+        duration: '',
+        notes: ''
+      });
+      setShowAddForm(false);
+      setShowSuggestions(false);
+    }
+  };
+
+  const startEditing = (task) => {
+    setEditingTask({ ...task });
+  };
+
+  const saveEdit = () => {
+    if (editingTask.task && editingTask.date) {
+      setTasks(tasks.map(task => 
+        task.id === editingTask.id ? editingTask : task
+      ));
+      setEditingTask(null);
+      setShowSuggestions(false);
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingTask(null);
+    setShowSuggestions(false);
+  };
+
+  const deleteTask = (taskId) => {
+    setTasks(tasks.filter(task => task.id !== taskId));
+  };
+
+  const getTasksForDate = (date) => {
+    const dateStr = date.toISOString().split('T')[0];
+    return tasks.filter(task => task.date === dateStr);
+  };
+
+  const getDaysInMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  const formatDate = (date) => {
+    return date.toLocaleDateString('en-US', { 
+      month: 'long', 
+      year: 'numeric' 
+    });
+  };
+
+  const calculateFrequencyAnalysis = () => {
+    const taskGroups = {};
+    
+    tasks.forEach(task => {
+      const taskName = task.task.toLowerCase();
+      if (!taskGroups[taskName]) {
+        taskGroups[taskName] = [];
+      }
+      taskGroups[taskName].push(new Date(task.date));
+    });
+
+    const analysis = Object.entries(taskGroups).map(([taskName, dates]) => {
+      dates.sort((a, b) => a - b);
+      
+      if (dates.length < 2) {
+        return {
+          task: taskName,
+          occurrences: dates.length,
+          averageDays: null,
+          suggestedCadence: 'Need more data',
+          lastDone: dates[0],
+          daysSinceLastDone: Math.floor((new Date() - dates[0]) / (1000 * 60 * 60 * 24))
+        };
+      }
+
+      let totalDays = 0;
+      for (let i = 1; i < dates.length; i++) {
+        totalDays += Math.floor((dates[i] - dates[i-1]) / (1000 * 60 * 60 * 24));
+      }
+      
+      const averageDays = Math.round(totalDays / (dates.length - 1));
+      
+      let suggestedCadence = '';
+      if (averageDays <= 7) suggestedCadence = 'Weekly';
+      else if (averageDays <= 14) suggestedCadence = 'Bi-weekly';
+      else if (averageDays <= 35) suggestedCadence = 'Monthly';
+      else if (averageDays <= 70) suggestedCadence = 'Bi-monthly';
+      else if (averageDays <= 120) suggestedCadence = 'Quarterly';
+      else if (averageDays <= 200) suggestedCadence = 'Every 6 months';
+      else suggestedCadence = 'Yearly';
+
+      return {
+        task: taskName,
+        occurrences: dates.length,
+        averageDays,
+        suggestedCadence,
+        lastDone: dates[dates.length - 1],
+        daysSinceLastDone: Math.floor((new Date() - dates[dates.length - 1]) / (1000 * 60 * 60 * 24))
+      };
+    });
+
+    return analysis.sort((a, b) => b.occurrences - a.occurrences);
+  };
+
+  const renderCalendar = () => {
+    const daysInMonth = getDaysInMonth(selectedMonth);
+    const firstDay = getFirstDayOfMonth(selectedMonth);
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    
+    const calendarDays = [];
+    
+    // Empty cells for days before month starts
+    for (let i = 0; i < firstDay; i++) {
+      calendarDays.push(<div key={`empty-${i}`} className="p-2 h-32 border border-gray-200"></div>);
+    }
+    
+    // Days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const currentDate = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), day);
+      const dayTasks = getTasksForDate(currentDate);
+      
+      calendarDays.push(
+        <div key={day} className="p-1 h-32 border border-gray-200 bg-white hover:bg-gray-50 overflow-y-auto">
+          <div className="font-semibold text-sm mb-1">{day}</div>
+          {dayTasks.map(task => (
+            <div key={task.id} className="text-xs bg-blue-100 rounded px-1 py-0.5 mb-1 flex items-center justify-between group">
+              <span 
+                className="truncate cursor-pointer flex-1" 
+                title={task.task}
+                onClick={() => startEditing(task)}
+              >
+                {task.task.length > 15 ? task.task.substring(0, 15) + '...' : task.task}
+              </span>
+              <button
+                onClick={() => startEditing(task)}
+                className="opacity-0 group-hover:opacity-100 ml-1 text-blue-600 hover:text-blue-800"
+                title="Edit task"
+              >
+                <Edit2 className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-white rounded-lg shadow p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">{formatDate(selectedMonth)}</h2>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setSelectedMonth(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() - 1, 1))}
+              className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+            >
+              ←
+            </button>
+            <button 
+              onClick={() => setSelectedMonth(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 1))}
+              className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+            >
+              →
+            </button>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-7 gap-0 mb-2">
+          {days.map(day => (
+            <div key={day} className="p-2 font-semibold text-center bg-gray-100 border border-gray-300">
+              {day}
+            </div>
+          ))}
+        </div>
+        
+        <div className="grid grid-cols-7 gap-0 border border-gray-300">
+          {calendarDays}
+        </div>
+      </div>
+    );
+  };
+
+  const renderAnalysis = () => {
+    const analysis = calculateFrequencyAnalysis();
+    const filteredAnalysis = searchTerm 
+      ? analysis.filter(item => item.task.toLowerCase().includes(searchTerm.toLowerCase()))
+      : analysis;
+
+    return (
+      <div className="bg-white rounded-lg shadow p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">Task Frequency Analysis</h2>
+          <div className="flex items-center gap-2">
+            <Search className="w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search tasks..."
+              className="border rounded px-2 py-1"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+        
+        <div className="grid gap-4">
+          {filteredAnalysis.map((item, index) => (
+            <div key={index} className="border rounded p-4 hover:bg-gray-50">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-semibold capitalize text-lg">{item.task}</h3>
+                <span className="bg-blue-100 px-2 py-1 rounded text-sm">
+                  {item.occurrences} times
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-600">Average Frequency:</span>
+                  <div className="font-semibold">
+                    {item.averageDays ? `${item.averageDays} days` : 'N/A'}
+                  </div>
+                </div>
+                
+                <div>
+                  <span className="text-gray-600">Suggested Cadence:</span>
+                  <div className="font-semibold text-green-600">{item.suggestedCadence}</div>
+                </div>
+                
+                <div>
+                  <span className="text-gray-600">Last Done:</span>
+                  <div className="font-semibold">
+                    {item.lastDone.toLocaleDateString()}
+                  </div>
+                </div>
+                
+                <div>
+                  <span className="text-gray-600">Days Since:</span>
+                  <div className={`font-semibold ${item.daysSinceLastDone > (item.averageDays || 30) ? 'text-red-600' : 'text-green-600'}`}>
+                    {item.daysSinceLastDone} days
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderTaskForm = (isEditing = false) => {
+    const currentTask = isEditing ? editingTask : newTask;
+    const setCurrentTask = isEditing ? setEditingTask : setNewTask;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+          <h3 className="text-lg font-bold mb-4">
+            {isEditing ? 'Edit Task' : 'Add New Task'}
+          </h3>
+          
+          <div className="space-y-4">
+            <div className="relative">
+              <label className="block text-sm font-medium mb-1">Task Description</label>
+              <input
+                type="text"
+                className="w-full border rounded px-3 py-2"
+                value={currentTask.task}
+                onChange={(e) => handleTaskInput(e.target.value, isEditing)}
+                placeholder="e.g., Cleaned kitchen sink"
+                onFocus={() => {
+                  if (currentTask.task.length > 0) {
+                    const uniqueTasks = getUniqueTaskNames();
+                    const suggestions = uniqueTasks.filter(task => 
+                      task.toLowerCase().includes(currentTask.task.toLowerCase()) && 
+                      task.toLowerCase() !== currentTask.task.toLowerCase()
+                    ).slice(0, 5);
+                    setTaskSuggestions(suggestions);
+                    setShowSuggestions(suggestions.length > 0);
+                  }
+                }}
+                onBlur={() => {
+                  // Delay hiding suggestions to allow clicks
+                  setTimeout(() => setShowSuggestions(false), 200);
+                }}
+              />
+              
+              {showSuggestions && (
+                <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-b-md shadow-lg max-h-40 overflow-y-auto">
+                  {taskSuggestions.map((suggestion, index) => (
+                    <div
+                      key={index}
+                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm text-gray-600"
+                      onClick={() => selectSuggestion(suggestion, isEditing)}
+                    >
+                      {suggestion}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-1">Date</label>
+              <input
+                type="date"
+                className="w-full border rounded px-3 py-2"
+                value={currentTask.date}
+                onChange={(e) => setCurrentTask({...currentTask, date: e.target.value})}
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-1">Duration (optional)</label>
+              <input
+                type="text"
+                className="w-full border rounded px-3 py-2"
+                value={currentTask.duration}
+                onChange={(e) => setCurrentTask({...currentTask, duration: e.target.value})}
+                placeholder="e.g., 15 minutes"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-1">Notes (optional)</label>
+              <textarea
+                className="w-full border rounded px-3 py-2 h-20"
+                value={currentTask.notes}
+                onChange={(e) => setCurrentTask({...currentTask, notes: e.target.value})}
+                placeholder="Any additional notes..."
+              />
+            </div>
+          </div>
+          
+          <div className="flex gap-2 mt-6">
+            <button
+              onClick={isEditing ? saveEdit : addTask}
+              className="flex items-center gap-2 flex-1 bg-blue-500 text-white rounded py-2 hover:bg-blue-600 justify-center"
+            >
+              <Check className="w-4 h-4" />
+              {isEditing ? 'Save Changes' : 'Add Task'}
+            </button>
+            <button
+              onClick={isEditing ? cancelEdit : () => setShowAddForm(false)}
+              className="flex items-center gap-2 flex-1 bg-gray-300 text-gray-700 rounded py-2 hover:bg-gray-400 justify-center"
+            >
+              <X className="w-4 h-4" />
+              Cancel
+            </button>
+            {isEditing && (
+              <button
+                onClick={() => {
+                  deleteTask(editingTask.id);
+                  setEditingTask(null);
+                }}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                title="Delete task"
+              >
+                Delete
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-4">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow p-4 mb-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h1 className="text-2xl font-bold text-gray-800">Task Frequency Tracker</h1>
+            
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setCurrentView('calendar')}
+                className={`flex items-center gap-2 px-4 py-2 rounded ${
+                  currentView === 'calendar' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'
+                }`}
+              >
+                <Calendar className="w-4 h-4" />
+                Calendar
+              </button>
+              
+              <button
+                onClick={() => setCurrentView('analysis')}
+                className={`flex items-center gap-2 px-4 py-2 rounded ${
+                  currentView === 'analysis' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'
+                }`}
+              >
+                <BarChart3 className="w-4 h-4" />
+                Analysis
+              </button>
+              
+              <button
+                onClick={exportToCSV}
+                className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                title="Export to CSV"
+              >
+                <Download className="w-4 h-4" />
+                Export
+              </button>
+              
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                <Plus className="w-4 h-4" />
+                Add Task
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Summary Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+          <div className="bg-white rounded-lg shadow p-4">
+            <div className="flex items-center gap-3">
+              <Clock className="w-8 h-8 text-blue-500" />
+              <div>
+                <div className="text-2xl font-bold">{tasks.length}</div>
+                <div className="text-gray-600 text-sm">Total Tasks Logged</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow p-4">
+            <div className="flex items-center gap-3">
+              <TrendingUp className="w-8 h-8 text-green-500" />
+              <div>
+                <div className="text-2xl font-bold">
+                  {calculateFrequencyAnalysis().length}
+                </div>
+                <div className="text-gray-600 text-sm">Unique Task Types</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow p-4">
+            <div className="flex items-center gap-3">
+              <Calendar className="w-8 h-8 text-purple-500" />
+              <div>
+                <div className="text-2xl font-bold">
+                  {tasks.filter(t => t.date === new Date().toISOString().split('T')[0]).length}
+                </div>
+                <div className="text-gray-600 text-sm">Tasks Today</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        {currentView === 'calendar' && renderCalendar()}
+        {currentView === 'analysis' && renderAnalysis()}
+        
+        {/* Add/Edit Task Modal */}
+        {showAddForm && renderTaskForm(false)}
+        {editingTask && renderTaskForm(true)}
+      </div>
+    </div>
+  );
+};
+
+export default TaskTracker;
