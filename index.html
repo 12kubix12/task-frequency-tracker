@@ -184,7 +184,44 @@ const Edit2 = ({ className }) => (
                     return initialTasks;
                 }
             });
-            
+            // Clean up corrupted tasks on app load
+React.useEffect(() => {
+    const cleanedTasks = tasks.filter(task => {
+        // Remove tasks with missing required fields
+        if (!task.id || !task.task || !task.date) {
+            console.log("Removing corrupted task:", task);
+            return false;
+        }
+        
+        // Remove tasks with empty task names
+        if (task.task.trim().length === 0) {
+            console.log("Removing empty task:", task);
+            return false;
+        }
+        
+        // Validate date format
+        const date = new Date(task.date);
+        if (isNaN(date.getTime())) {
+            console.log("Removing task with invalid date:", task);
+            return false;
+        }
+        
+        return true;
+    }).map(task => ({
+        ...task,
+        category: task.category || categorizeTask(task.task),
+        room: task.room || "",
+        duration: task.duration || "",
+        notes: task.notes || "",
+        task: capitalizeText(task.task.trim())
+    }));
+    
+    // Update tasks if any were cleaned
+    if (cleanedTasks.length !== tasks.length) {
+        console.log(`Cleaned ${tasks.length - cleanedTasks.length} corrupted tasks`);
+        setTasks(cleanedTasks);
+    }
+}, []); // Run once on component mount
             const [currentView, setCurrentView] = React.useState('monthly');
             const [selectedMonth, setSelectedMonth] = React.useState(new Date(2025, 7, 1));
             const [selectedWeek, setSelectedWeek] = React.useState(new Date());
@@ -1386,6 +1423,7 @@ const Edit2 = ({ className }) => (
 </body>
 
 </html>
+
 
 
 
