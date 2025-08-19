@@ -523,8 +523,8 @@ const Edit2 = ({ className }) => (
             const addTask = () => {
                 if (newTask.task && newTask.date) {
                     const task = { 
-                        id: Date.now(), 
-                        ...newTask,
+    id: Date.now() + Math.random(), 
+    ...newTask,
                         task: capitalizeText(newTask.task),
                         room: capitalizeText(newTask.room),
                         category: newTask.category || categorizeTask(newTask.task)
@@ -1386,6 +1386,7 @@ const Edit2 = ({ className }) => (
 </body>
 
 </html>
+
 
 
 
