@@ -609,10 +609,21 @@ React.useEffect(() => {
 
             // Date and calendar helper functions
             const getTasksForDate = (date) => {
-                const dateStr = date.toISOString().split('T')[0];
-                const filtered = getFilteredTasks().filter(task => task.date === dateStr);
-                return filtered.sort((a, b) => a.task.localeCompare(b.task));
-            };
+    const dateStr = date.toISOString().split('T')[0];
+    // Use all tasks for calendar display, but filtered tasks for popup
+    const allTasks = tasks.filter(task => 
+        task.date === dateStr && 
+        task.task && 
+        task.task.trim().length > 0
+    );
+    
+    // Apply category filter for the popup
+    const filtered = categoryFilter !== 'all' 
+        ? allTasks.filter(task => task.category === categoryFilter)
+        : allTasks;
+        
+    return filtered.sort((a, b) => a.task.localeCompare(b.task));
+};
 
             const getDaysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
             const getFirstDayOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
@@ -1423,6 +1434,7 @@ React.useEffect(() => {
 </body>
 
 </html>
+
 
 
 
