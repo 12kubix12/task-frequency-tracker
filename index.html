@@ -520,28 +520,39 @@ const Edit2 = ({ className }) => (
             };
 
             // Task management functions
-            const addTask = () => {
-                if (newTask.task && newTask.date) {
-                    const task = { 
-    id: Date.now() + Math.random(), 
-    ...newTask,
-                        task: capitalizeText(newTask.task),
-                        room: capitalizeText(newTask.room),
-                        category: newTask.category || categorizeTask(newTask.task)
-                    };
-                    setTasks([...tasks, task]);
-                    setNewTask({
-                        task: '', 
-                        date: new Date().toISOString().split('T')[0], 
-                        duration: '', 
-                        notes: '',
-                        category: 'household',
-                        room: ''
-                    });
-                    setShowAddForm(false);
-                    setShowSuggestions(false);
-                }
-            };
+        const addTask = () => {
+    if (newTask.task && newTask.date) {
+        // Check for duplicates before adding
+        const isDuplicate = tasks.some(existingTask => 
+            existingTask.task.toLowerCase().trim() === newTask.task.toLowerCase().trim() &&
+            existingTask.date === newTask.date
+        );
+        
+        if (isDuplicate) {
+            alert('A task with this name already exists on this date. Please modify the task name or choose a different date.');
+            return;
+        }
+        
+        const task = { 
+            id: Date.now() + Math.random(), 
+            ...newTask,
+            task: capitalizeText(newTask.task),
+            room: capitalizeText(newTask.room),
+            category: newTask.category || categorizeTask(newTask.task)
+        };
+        setTasks([...tasks, task]);
+        setNewTask({
+            task: '', 
+            date: new Date().toISOString().split('T')[0], 
+            duration: '', 
+            notes: '',
+            category: 'household',
+            room: ''
+        });
+        setShowAddForm(false);
+        setShowSuggestions(false);
+    }
+};
 
             const startEditing = (task) => {
                 setEditingTask({ ...task });
@@ -1386,6 +1397,7 @@ const Edit2 = ({ className }) => (
 </body>
 
 </html>
+
 
 
 
