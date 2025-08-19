@@ -689,7 +689,7 @@ const Edit2 = ({ className }) => (
                 const setCurrentTask = isEditing ? setEditingTask : setNewTask;
 
                 return React.createElement('div', { className: "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" },
-                    React.createElement('div', { className: "bg-white rounded-lg p-6 w-full max-w-md" },
+                    React.createElement('div', { className: "bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto" },
                         React.createElement('h3', { className: "text-lg font-bold mb-4" },
                             isEditing ? 'Edit Task' : 'Add New Task'
                         ),
@@ -1386,4 +1386,5 @@ const Edit2 = ({ className }) => (
 </body>
 
 </html>
+
 
