@@ -194,6 +194,8 @@ const Edit2 = ({ className }) => (
             const [editingTask, setEditingTask] = React.useState(null);
             const [taskSuggestions, setTaskSuggestions] = React.useState([]);
             const [showSuggestions, setShowSuggestions] = React.useState(false);
+const [roomSuggestions, setRoomSuggestions] = React.useState([]);
+const [showRoomSuggestions, setShowRoomSuggestions] = React.useState(false);
             const [selectedDay, setSelectedDay] = React.useState(null);
             const [showImportForm, setShowImportForm] = React.useState(false);
             const [importData, setImportData] = React.useState('');
@@ -448,6 +450,14 @@ const Edit2 = ({ className }) => (
                 const uniqueTasks = [...new Set(tasks.map(t => t.task))];
                 return uniqueTasks.sort();
             };
+            // Get unique room names for autocomplete
+const getUniqueRoomNames = () => {
+    const uniqueRooms = [...new Set(tasks
+        .map(t => t.room)
+        .filter(room => room && room.trim() !== '')
+    )];
+    return uniqueRooms.sort();
+};
 
             // Handle task input with smart categorization
             const handleTaskInput = (value, isEditing = false) => {
@@ -1397,6 +1407,7 @@ const Edit2 = ({ className }) => (
 </body>
 
 </html>
+
 
 
 
