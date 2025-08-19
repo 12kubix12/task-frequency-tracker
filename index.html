@@ -506,7 +506,49 @@ const getUniqueRoomNames = () => {
                 }
                 setShowSuggestions(false);
             };
+// Handle room input with autocomplete
+const handleRoomInput = (value, isEditing = false) => {
+    const capitalizedValue = capitalizeText(value);
+    if (isEditing) {
+        setEditingTask(prev => ({ 
+            ...prev, 
+            room: capitalizedValue
+        }));
+    } else {
+        setNewTask(prev => ({ 
+            ...prev, 
+            room: capitalizedValue
+        }));
+    }
 
+    if (value.length > 0) {
+        const uniqueRooms = getUniqueRoomNames();
+        const suggestions = uniqueRooms.filter(room => 
+            room.toLowerCase().includes(value.toLowerCase()) && 
+            room.toLowerCase() !== value.toLowerCase()
+        ).slice(0, 5);
+        setRoomSuggestions(suggestions);
+        setShowRoomSuggestions(suggestions.length > 0);
+    } else {
+        setShowRoomSuggestions(false);
+    }
+};
+
+// Select room autocomplete suggestion
+const selectRoomSuggestion = (suggestion, isEditing = false) => {
+    if (isEditing) {
+        setEditingTask(prev => ({ 
+            ...prev, 
+            room: suggestion
+        }));
+    } else {
+        setNewTask(prev => ({ 
+            ...prev, 
+            room: suggestion
+        }));
+    }
+    setShowRoomSuggestions(false);
+};
             // Export to CSV with all fields
             const exportToCSV = () => {
                 const headers = ['Task', 'Date', 'Duration', 'Notes', 'Category', 'Room'];
@@ -1407,6 +1449,7 @@ const getUniqueRoomNames = () => {
 </body>
 
 </html>
+
 
 
 
