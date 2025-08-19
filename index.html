@@ -521,7 +521,7 @@ const Edit2 = ({ className }) => (
 
             // Task management functions
         const addTask = () => {
-    if (newTask.task && newTask.date) {
+    if (newTask.task && newTask.date && newTask.room.trim()) {
         // Check for duplicates before adding
         const isDuplicate = tasks.some(existingTask => 
             existingTask.task.toLowerCase().trim() === newTask.task.toLowerCase().trim() &&
@@ -559,7 +559,7 @@ const Edit2 = ({ className }) => (
             };
 
            const saveEdit = () => {
-                if (editingTask.task && editingTask.date) {
+                if (editingTask.task && editingTask.date && editingTask.room.trim()) {
                     setTasks(tasks.map(task => 
                         task.id === editingTask.id ? {
                             ...editingTask,
@@ -1397,6 +1397,7 @@ const Edit2 = ({ className }) => (
 </body>
 
 </html>
+
 
 
 
