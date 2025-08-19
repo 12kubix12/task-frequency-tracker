@@ -790,16 +790,26 @@ const selectRoomSuggestion = (suggestion, isEditing = false) => {
                                     )
                                 )
                             ),
-                            React.createElement('div', {},
-                                React.createElement('label', { className: "block text-sm font-medium mb-1" }, 'Room (optional)'),
-                                React.createElement('input', {
-                                    type: "text",
-                                    className: "w-full border rounded px-3 py-2",
-                                    value: currentTask.room,
-                                    onChange: (e) => setCurrentTask({...currentTask, room: capitalizeText(e.target.value)}),
-                                    placeholder: "e.g., Kitchen, Washroom, Living Room"
-                                })
-                            ),
+                            React.createElement('div', { className: "relative" },
+    React.createElement('label', { className: "block text-sm font-medium mb-1" }, 'Room *'),
+    React.createElement('input', {
+        type: "text",
+        className: "w-full border rounded px-3 py-2",
+        value: currentTask.room,
+        onChange: (e) => handleRoomInput(e.target.value, isEditing),
+        placeholder: "e.g., Kitchen, Washroom, Living Room",
+        required: true
+    }),
+    showRoomSuggestions && React.createElement('div', { className: "absolute z-10 w-full bg-white border border-gray-300 rounded-b-md shadow-lg max-h-40 overflow-y-auto" },
+        ...roomSuggestions.map((suggestion, index) =>
+            React.createElement('div', {
+                key: index,
+                className: "px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm text-gray-600",
+                onClick: () => selectRoomSuggestion(suggestion, isEditing)
+            }, suggestion)
+        )
+    )
+),
                             React.createElement('div', {},
                                 React.createElement('label', { className: "block text-sm font-medium mb-1" }, 'Date'),
                                 React.createElement('input', {
@@ -1449,6 +1459,7 @@ const selectRoomSuggestion = (suggestion, isEditing = false) => {
 </body>
 
 </html>
+
 
 
 
