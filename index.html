@@ -851,7 +851,11 @@ setShowRoomSuggestions(false);
                                 isEditing ? 'Save Changes' : 'Add Task'
                             ),
                             React.createElement('button', {
-                                onClick: isEditing ? cancelEdit : () => setShowAddForm(false),
+                                onClick: isEditing ? cancelEdit : () => {
+    setShowAddForm(false);
+    setShowSuggestions(false);
+    setShowRoomSuggestions(false);
+},
                                 className: "flex items-center gap-2 flex-1 bg-gray-300 text-gray-700 rounded py-2 hover:bg-gray-400 justify-center"
                             },
                                 React.createElement(X, { className: "w-4 h-4" }),
@@ -1462,6 +1466,7 @@ setShowRoomSuggestions(false);
 </body>
 
 </html>
+
 
 
 
