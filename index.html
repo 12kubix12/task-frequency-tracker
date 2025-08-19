@@ -627,9 +627,10 @@ setShowRoomSuggestions(false);
             };
 
             const cancelEdit = () => {
-                setEditingTask(null);
-                setShowSuggestions(false);
-            };
+    setEditingTask(null);
+    setShowSuggestions(false);
+    setShowRoomSuggestions(false);
+};
 
             const deleteTask = (taskId) => {
                 setTasks(tasks.filter(task => task.id !== taskId));
@@ -1461,6 +1462,7 @@ setShowRoomSuggestions(false);
 </body>
 
 </html>
+
 
 
 
